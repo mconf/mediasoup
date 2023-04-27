@@ -173,7 +173,7 @@ export type ConsumerStat =
 export type ConsumerType = 'simple' | 'simulcast' | 'svc' | 'pipe';
 
 export type ConsumerEvents =
-{ 
+{
 	transportclose: [];
 	producerclose: [];
 	producerpause: [];
@@ -312,6 +312,11 @@ export class Consumer<ConsumerAppData extends AppData = AppData>
 	get producerId(): string
 	{
 		return this.#data.producerId;
+	}
+
+	set producerId(producerId: string)
+	{
+		this.#data.producerId = producerId;
 	}
 
 	/**
@@ -613,6 +618,22 @@ export class Consumer<ConsumerAppData extends AppData = AppData>
 
 		await this.#channel.request(
 			'consumer.enableTraceEvent', this.#internal.consumerId, reqData);
+	}
+
+	/**
+	 * Replaces the producer associated with this consumer.
+	 */
+	async changeProducer(producerId: string): Promise<any>
+	{
+		logger.debug('changeProducer()');
+
+		const reqData = { producerId };
+		const data =
+			await this.#channel.request('consumer.changeProducer', this.#internal.consumerId, reqData);
+
+		this.producerId = producerId;
+
+		return data;
 	}
 
 	private handleWorkerNotifications(): void
