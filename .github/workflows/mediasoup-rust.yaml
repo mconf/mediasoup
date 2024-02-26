@@ -1,6 +1,6 @@
 name: mediasoup-rust
 
-on: [push, pull_request]
+on: [pull_request, workflow_dispatch]
 
 concurrency:
   # Cancel a currently running workflow from the same PR, branch or tag when a
@@ -19,6 +19,7 @@ jobs:
           - ubuntu-20.04
           - ubuntu-22.04
           - macos-12
+          - macos-14
           - windows-2022
 
     runs-on: ${{ matrix.os }}
@@ -28,7 +29,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure cache
         uses: actions/cache@v3
@@ -46,3 +47,9 @@ jobs:
 
       - name: cargo test
         run: cargo test --verbose
+
+      - name: cargo doc
+        run: cargo doc --locked --all --no-deps --lib
+        env:
+          DOCS_RS: '1'
+          RUSTDOCFLAGS: '-D rustdoc::broken-intra-doc-links -D rustdoc::private_intra_doc_links'

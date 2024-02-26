@@ -26,7 +26,6 @@
 #include <libwebrtc/modules/rtp_rtcp/include/rtp_rtcp_defines.h> // webrtc::RtpPacketSendInfo
 #include <iterator>                                              // std::ostream_iterator
 #include <map>                                                   // std::multimap
-#include <sstream>                                               // std::ostringstream
 
 namespace RTC
 {
@@ -2272,6 +2271,7 @@ namespace RTC
 				auto* consumer = it->second;
 				auto bweType   = this->tccClient->GetBweType();
 
+				// NOLINTNEXTLINE(bugprone-too-small-loop-variable)
 				for (uint8_t i{ 1u }; i <= (baseAllocation ? 1u : priority); ++i)
 				{
 					uint32_t usedBitrate{ 0u };
@@ -2332,7 +2332,7 @@ namespace RTC
 		this->tccClient->SetDesiredBitrate(totalDesiredBitrate, forceBitrate);
 	}
 
-	inline void Transport::EmitTraceEventProbationType(RTC::RtpPacket* packet) const
+	inline void Transport::EmitTraceEventProbationType(RTC::RtpPacket* /*packet*/) const
 	{
 		MS_TRACE();
 
@@ -2505,7 +2505,7 @@ namespace RTC
 			sentInfo.sendingAtMs = DepLibUV::GetTimeMs();
 
 			auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo, senderBweWeakPtr, &sentInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo, senderBweWeakPtr, sentInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -2529,7 +2529,7 @@ namespace RTC
 			SendRtpPacket(consumer, packet, cb);
 #else
 			const auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -2594,7 +2594,7 @@ namespace RTC
 			sentInfo.sendingAtMs = DepLibUV::GetTimeMs();
 
 			auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo, senderBweWeakPtr, &sentInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo, senderBweWeakPtr, sentInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -2618,7 +2618,7 @@ namespace RTC
 			SendRtpPacket(consumer, packet, cb);
 #else
 			const auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -2912,10 +2912,10 @@ namespace RTC
 		// Pass the SCTP message to the corresponding DataProducer.
 		try
 		{
-			static std::vector<uint16_t> EmptySubchannels;
+			static std::vector<uint16_t> emptySubchannels;
 
 			dataProducer->ReceiveMessage(
-			  msg, len, ppid, EmptySubchannels, /*requiredSubchannel*/ std::nullopt);
+			  msg, len, ppid, emptySubchannels, /*requiredSubchannel*/ std::nullopt);
 		}
 		catch (std::exception& error)
 		{
@@ -2955,7 +2955,7 @@ namespace RTC
 	}
 
 	inline void Transport::OnTransportCongestionControlClientSendRtpPacket(
-	  RTC::TransportCongestionControlClient* tccClient,
+	  RTC::TransportCongestionControlClient* /*tccClient*/,
 	  RTC::RtpPacket* packet,
 	  const webrtc::PacedPacketInfo& pacingInfo)
 	{
@@ -3001,7 +3001,7 @@ namespace RTC
 			sentInfo.sendingAtMs = DepLibUV::GetTimeMs();
 
 			auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo, senderBweWeakPtr, &sentInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo, senderBweWeakPtr, sentInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -3025,7 +3025,7 @@ namespace RTC
 			SendRtpPacket(nullptr, packet, cb);
 #else
 			const auto* cb = new onSendCallback(
-			  [tccClientWeakPtr, &packetInfo](bool sent)
+			  [tccClientWeakPtr, packetInfo](bool sent)
 			  {
 				  if (sent)
 				  {
@@ -3102,8 +3102,8 @@ namespace RTC
 
 			/*
 			 * The interval between RTCP packets is varied randomly over the range
-			 * [1.0,1.5] times the calculated interval to avoid unintended synchronization
-			 * of all participants.
+			 * [1.0, 1.5] times the calculated interval to avoid unintended
+			 * synchronization of all participants.
 			 */
 			interval *= static_cast<float>(Utils::Crypto::GetRandomUInt(10, 15)) / 10;
 

@@ -116,7 +116,9 @@ pub struct DataProducerDump {
 }
 
 impl DataProducerDump {
-    pub(crate) fn from_fbs(dump: data_producer::DumpResponse) -> Result<Self, Box<dyn Error>> {
+    pub(crate) fn from_fbs(
+        dump: data_producer::DumpResponse,
+    ) -> Result<Self, Box<dyn Error + Send + Sync>> {
         Ok(Self {
             id: dump.id.parse()?,
             r#type: if dump.type_ == data_producer::Type::Sctp {
@@ -549,13 +551,13 @@ impl DirectDataProducer {
         subchannels: Option<Vec<u16>>,
         required_subchannel: Option<u16>,
     ) -> Result<(), NotificationError> {
-        let (ppid, _payload) = message.into_ppid_and_payload();
+        let (ppid, payload) = message.into_ppid_and_payload();
 
         self.inner.channel.notify(
             self.inner.id,
             DataProducerSendNotification {
                 ppid,
-                payload: _payload.into_owned(),
+                payload: payload.into_owned(),
                 subchannels,
                 required_subchannel,
             },

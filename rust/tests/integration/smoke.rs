@@ -86,8 +86,9 @@ fn smoke() {
                     WebRtcTransportOptions::new(WebRtcTransportListenInfos::new(ListenInfo {
                         protocol: Protocol::Udp,
                         ip: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                        announced_ip: None,
+                        announced_address: None,
                         port: None,
+                        flags: None,
                         send_buffer_size: None,
                         recv_buffer_size: None,
                     }));
@@ -272,8 +273,9 @@ fn smoke() {
                 let mut options = PlainTransportOptions::new(ListenInfo {
                     protocol: Protocol::Udp,
                     ip: IpAddr::V4(Ipv4Addr::LOCALHOST),
-                    announced_ip: None,
+                    announced_address: None,
                     port: None,
+                    flags: None,
                     send_buffer_size: None,
                     recv_buffer_size: None,
                 });

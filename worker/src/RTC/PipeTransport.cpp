@@ -40,29 +40,23 @@ namespace RTC
 		// This may throw.
 		Utils::IP::NormalizeIp(this->listenInfo.ip);
 
-		if (flatbuffers::IsFieldPresent(options->listenInfo(), FBS::Transport::ListenInfo::VT_ANNOUNCEDIP))
-		{
-			this->listenInfo.announcedIp.assign(options->listenInfo()->announcedIp()->str());
-		}
-
-		if (flatbuffers::IsFieldPresent(options->listenInfo(), FBS::Transport::ListenInfo::VT_ANNOUNCEDIP))
-		{
-			this->listenInfo.announcedIp.assign(options->listenInfo()->announcedIp()->str());
-		}
-
-		this->listenInfo.port = options->listenInfo()->port();
-
 		if (flatbuffers::IsFieldPresent(
-		      options->listenInfo(), FBS::Transport::ListenInfo::VT_SENDBUFFERSIZE))
+		      options->listenInfo(), FBS::Transport::ListenInfo::VT_ANNOUNCEDADDRESS))
 		{
-			this->listenInfo.sendBufferSize = options->listenInfo()->sendBufferSize();
+			this->listenInfo.announcedAddress.assign(options->listenInfo()->announcedAddress()->str());
 		}
 
 		if (flatbuffers::IsFieldPresent(
-		      options->listenInfo(), FBS::Transport::ListenInfo::VT_RECVBUFFERSIZE))
+		      options->listenInfo(), FBS::Transport::ListenInfo::VT_ANNOUNCEDADDRESS))
 		{
-			this->listenInfo.recvBufferSize = options->listenInfo()->recvBufferSize();
+			this->listenInfo.announcedAddress.assign(options->listenInfo()->announcedAddress()->str());
 		}
+
+		this->listenInfo.port               = options->listenInfo()->port();
+		this->listenInfo.sendBufferSize     = options->listenInfo()->sendBufferSize();
+		this->listenInfo.recvBufferSize     = options->listenInfo()->recvBufferSize();
+		this->listenInfo.flags.ipv6Only     = options->listenInfo()->flags()->ipv6Only();
+		this->listenInfo.flags.udpReusePort = options->listenInfo()->flags()->udpReusePort();
 
 		this->rtx = options->enableRtx();
 
@@ -77,11 +71,12 @@ namespace RTC
 			// This may throw.
 			if (this->listenInfo.port != 0)
 			{
-				this->udpSocket = new RTC::UdpSocket(this, this->listenInfo.ip, this->listenInfo.port);
+				this->udpSocket = new RTC::UdpSocket(
+				  this, this->listenInfo.ip, this->listenInfo.port, this->listenInfo.flags);
 			}
 			else
 			{
-				this->udpSocket = new RTC::UdpSocket(this, this->listenInfo.ip);
+				this->udpSocket = new RTC::UdpSocket(this, this->listenInfo.ip, this->listenInfo.flags);
 			}
 
 			if (this->listenInfo.sendBufferSize != 0)
@@ -158,13 +153,13 @@ namespace RTC
 		{
 			std::string localIp;
 
-			if (this->listenInfo.announcedIp.empty())
+			if (this->listenInfo.announcedAddress.empty())
 			{
 				localIp = this->udpSocket->GetLocalIp();
 			}
 			else
 			{
-				localIp = this->listenInfo.announcedIp;
+				localIp = this->listenInfo.announcedAddress;
 			}
 
 			tuple = FBS::Transport::CreateTupleDirect(
@@ -209,13 +204,13 @@ namespace RTC
 		{
 			std::string localIp;
 
-			if (this->listenInfo.announcedIp.empty())
+			if (this->listenInfo.announcedAddress.empty())
 			{
 				localIp = this->udpSocket->GetLocalIp();
 			}
 			else
 			{
-				localIp = this->listenInfo.announcedIp;
+				localIp = this->listenInfo.announcedAddress;
 			}
 
 			tuple = FBS::Transport::CreateTupleDirect(
@@ -415,9 +410,9 @@ namespace RTC
 					this->tuple = new RTC::TransportTuple(
 					  this->udpSocket, reinterpret_cast<struct sockaddr*>(&this->remoteAddrStorage));
 
-					if (!this->listenInfo.announcedIp.empty())
+					if (!this->listenInfo.announcedAddress.empty())
 					{
-						this->tuple->SetLocalAnnouncedIp(this->listenInfo.announcedIp);
+						this->tuple->SetLocalAnnouncedAddress(this->listenInfo.announcedAddress);
 					}
 				}
 				catch (const MediaSoupError& error)
@@ -491,9 +486,9 @@ namespace RTC
 		}
 
 		const uint8_t* data = packet->GetData();
-		auto intLen         = static_cast<int>(packet->GetSize());
+		auto len            = packet->GetSize();
 
-		if (HasSrtp() && !this->srtpSendSession->EncryptRtp(&data, &intLen))
+		if (HasSrtp() && !this->srtpSendSession->EncryptRtp(&data, &len))
 		{
 			if (cb)
 			{
@@ -503,8 +498,6 @@ namespace RTC
 
 			return;
 		}
-
-		auto len = static_cast<size_t>(intLen);
 
 		this->tuple->Send(data, len, cb);
 
@@ -522,14 +515,12 @@ namespace RTC
 		}
 
 		const uint8_t* data = packet->GetData();
-		auto intLen         = static_cast<int>(packet->GetSize());
+		auto len            = packet->GetSize();
 
-		if (HasSrtp() && !this->srtpSendSession->EncryptRtcp(&data, &intLen))
+		if (HasSrtp() && !this->srtpSendSession->EncryptRtcp(&data, &len))
 		{
 			return;
 		}
-
-		auto len = static_cast<size_t>(intLen);
 
 		this->tuple->Send(data, len);
 
@@ -549,14 +540,12 @@ namespace RTC
 		packet->Serialize(RTC::RTCP::Buffer);
 
 		const uint8_t* data = packet->GetData();
-		auto intLen         = static_cast<int>(packet->GetSize());
+		auto len            = packet->GetSize();
 
-		if (HasSrtp() && !this->srtpSendSession->EncryptRtcp(&data, &intLen))
+		if (HasSrtp() && !this->srtpSendSession->EncryptRtcp(&data, &len))
 		{
 			return;
 		}
-
-		auto len = static_cast<size_t>(intLen);
 
 		this->tuple->Send(data, len);
 
@@ -645,11 +634,9 @@ namespace RTC
 		}
 
 		// Decrypt the SRTP packet.
-		auto intLen = static_cast<int>(len);
-
-		if (HasSrtp() && !this->srtpRecvSession->DecryptSrtp(const_cast<uint8_t*>(data), &intLen))
+		if (HasSrtp() && !this->srtpRecvSession->DecryptSrtp(const_cast<uint8_t*>(data), &len))
 		{
-			RTC::RtpPacket* packet = RTC::RtpPacket::Parse(data, static_cast<size_t>(intLen));
+			RTC::RtpPacket* packet = RTC::RtpPacket::Parse(data, len);
 
 			if (!packet)
 			{
@@ -670,7 +657,7 @@ namespace RTC
 			return;
 		}
 
-		RTC::RtpPacket* packet = RTC::RtpPacket::Parse(data, static_cast<size_t>(intLen));
+		RTC::RtpPacket* packet = RTC::RtpPacket::Parse(data, len);
 
 		if (!packet)
 		{
@@ -707,9 +694,7 @@ namespace RTC
 		}
 
 		// Decrypt the SRTCP packet.
-		auto intLen = static_cast<int>(len);
-
-		if (HasSrtp() && !this->srtpRecvSession->DecryptSrtcp(const_cast<uint8_t*>(data), &intLen))
+		if (HasSrtp() && !this->srtpRecvSession->DecryptSrtcp(const_cast<uint8_t*>(data), &len))
 		{
 			return;
 		}
@@ -722,7 +707,7 @@ namespace RTC
 			return;
 		}
 
-		RTC::RTCP::Packet* packet = RTC::RTCP::Packet::Parse(data, static_cast<size_t>(intLen));
+		RTC::RTCP::Packet* packet = RTC::RTCP::Packet::Parse(data, len);
 
 		if (!packet)
 		{

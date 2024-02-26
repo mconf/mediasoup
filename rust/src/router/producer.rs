@@ -2,7 +2,9 @@
 mod tests;
 
 use crate::consumer::{RtpStreamParams, RtxStreamParams};
-use crate::data_structures::{AppData, RtpPacketTraceInfo, SsrcTraceInfo, TraceEventDirection};
+use crate::data_structures::{
+    AppData, RtpPacketTraceInfo, SrTraceInfo, SsrcTraceInfo, TraceEventDirection,
+};
 use crate::messages::{
     ProducerCloseRequest, ProducerDumpRequest, ProducerEnableTraceEventRequest,
     ProducerGetStatsRequest, ProducerPauseRequest, ProducerResumeRequest, ProducerSendNotification,
@@ -106,7 +108,9 @@ pub struct RtpStreamRecv {
 }
 
 impl RtpStreamRecv {
-    pub(crate) fn from_fbs_ref(dump: rtp_stream::DumpRef<'_>) -> Result<Self, Box<dyn Error>> {
+    pub(crate) fn from_fbs_ref(
+        dump: rtp_stream::DumpRef<'_>,
+    ) -> Result<Self, Box<dyn Error + Send + Sync>> {
         Ok(Self {
             params: RtpStreamParams::from_fbs_ref(dump.params()?)?,
             score: dump.score()?,
@@ -139,7 +143,7 @@ pub struct ProducerDump {
 impl ProducerDump {
     pub(crate) fn from_fbs_ref(
         dump: producer::DumpResponseRef<'_>,
-    ) -> Result<Self, Box<dyn Error>> {
+    ) -> Result<Self, Box<dyn Error + Send + Sync>> {
         Ok(Self {
             id: dump.id()?.parse()?,
             kind: MediaKind::from_fbs(dump.kind()?),
@@ -150,7 +154,7 @@ impl ProducerDump {
                 .rtp_streams()?
                 .iter()
                 .map(|rtp_stream| RtpStreamRecv::from_fbs_ref(rtp_stream?))
-                .collect::<Result<_, Box<dyn Error>>>()?,
+                .collect::<Result<_, Box<dyn Error + Send + Sync>>>()?,
             trace_event_types: dump
                 .trace_event_types()?
                 .iter()
@@ -394,6 +398,15 @@ pub enum ProducerTraceEventData {
         /// SSRC info.
         info: SsrcTraceInfo,
     },
+    /// RTCP Sender Report.
+    Sr {
+        /// Event timestamp.
+        timestamp: u64,
+        /// Event direction.
+        direction: TraceEventDirection,
+        /// SSRC info.
+        info: SrTraceInfo,
+    },
 }
 
 impl ProducerTraceEventData {
@@ -447,6 +460,17 @@ impl ProducerTraceEventData {
                     SsrcTraceInfo { ssrc: info.ssrc }
                 },
             },
+            producer::TraceEventType::Sr => ProducerTraceEventData::Sr {
+                timestamp: data.timestamp,
+                direction: TraceEventDirection::from_fbs(data.direction),
+                info: {
+                    let Some(producer::TraceInfo::SrTraceInfo(info)) = data.info else {
+                        panic!("Wrong message from worker: {data:?}");
+                    };
+
+                    SrTraceInfo::from_fbs(*info)
+                },
+            },
         }
     }
 }
@@ -465,6 +489,8 @@ pub enum ProducerTraceEventType {
     Pli,
     /// RTCP FIR packet.
     Fir,
+    /// RTCP Sender Report.
+    SR,
 }
 
 impl ProducerTraceEventType {
@@ -475,6 +501,7 @@ impl ProducerTraceEventType {
             ProducerTraceEventType::Nack => producer::TraceEventType::Nack,
             ProducerTraceEventType::Pli => producer::TraceEventType::Pli,
             ProducerTraceEventType::Fir => producer::TraceEventType::Fir,
+            ProducerTraceEventType::SR => producer::TraceEventType::Sr,
         }
     }
 
@@ -485,6 +512,7 @@ impl ProducerTraceEventType {
             producer::TraceEventType::Nack => ProducerTraceEventType::Nack,
             producer::TraceEventType::Pli => ProducerTraceEventType::Pli,
             producer::TraceEventType::Fir => ProducerTraceEventType::Fir,
+            producer::TraceEventType::Sr => ProducerTraceEventType::SR,
         }
     }
 }
