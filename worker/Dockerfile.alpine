@@ -1,0 +1,20 @@
+FROM alpine
+
+# Install dependencies.
+RUN set -x \
+	&& apk add gcc g++ nodejs-current npm python3 py3-pip linux-headers
+
+# Make CC and CXX point to gcc/g++.
+ENV LANG="C.UTF-8"
+ENV CC="gcc"
+ENV CXX="g++"
+
+ENV MEDIASOUP_LOCAL_DEV="true"
+ENV KEEP_BUILD_ARTIFACTS="1"
+# Disable liburing due to this bug:
+# https://github.com/versatica/mediasoup/issues/1334
+ENV MESON_ARGS="-Dms_disable_liburing=true"
+
+WORKDIR /mediasoup
+
+CMD ["ash"]
