@@ -1,5 +1,10 @@
 # Changelog
 
+### 3.14.7
+
+- `SimulcastConsumer`: Fix increase layer when current layer has not receive SR ([PR #1098](https://github.com/versatica/mediasoup/pull/1098) by @penguinol).
+- Ignore RTP packets with empty payload ([PR #1403](https://github.com/versatica/mediasoup/pull/1403), credits to @ggarber).
+
 ### 3.14.6
 
 - Worker: Fix potential double free when ICE consent check fails ([PR #1393](https://github.com/versatica/mediasoup/pull/1393)).
