@@ -7,6 +7,10 @@
 
 namespace Channel
 {
+	/* Static variables. */
+
+	thread_local flatbuffers::FlatBufferBuilder ChannelRequest::bufferBuilder{};
+
 	/* Class variables. */
 
 	// clang-format off
@@ -120,7 +124,7 @@ namespace Channel
 
 		this->replied = true;
 
-		auto& builder = this->bufferBuilder;
+		auto& builder = ChannelRequest::bufferBuilder;
 		auto response =
 		  FBS::Response::CreateResponse(builder, this->id, true, FBS::Response::Body::NONE, 0);
 
@@ -135,7 +139,7 @@ namespace Channel
 
 		this->replied = true;
 
-		auto& builder = this->bufferBuilder;
+		auto& builder = ChannelRequest::bufferBuilder;
 		auto response = FBS::Response::CreateResponseDirect(
 		  builder, this->id, false /*accepted*/, FBS::Response::Body::NONE, 0, "Error" /*Error*/, reason);
 
@@ -150,7 +154,7 @@ namespace Channel
 
 		this->replied = true;
 
-		auto& builder = this->bufferBuilder;
+		auto& builder = ChannelRequest::bufferBuilder;
 		auto response = FBS::Response::CreateResponseDirect(
 		  builder, this->id, false /*accepted*/, FBS::Response::Body::NONE, 0, "TypeError" /*Error*/, reason);
 
@@ -164,12 +168,12 @@ namespace Channel
 
 	void ChannelRequest::SendResponse(const flatbuffers::Offset<FBS::Response::Response>& response)
 	{
-		auto& builder = this->bufferBuilder;
+		auto& builder = ChannelRequest::bufferBuilder;
 		auto message =
 		  FBS::Message::CreateMessage(builder, FBS::Message::Body::Response, response.Union());
 
 		builder.FinishSizePrefixed(message);
 		this->Send(builder.GetBufferPointer(), builder.GetSize());
-		builder.Reset();
+		builder.Clear();
 	}
 } // namespace Channel

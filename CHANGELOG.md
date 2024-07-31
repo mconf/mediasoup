@@ -1,5 +1,14 @@
 # Changelog
 
+### NEXT
+
+### 3.14.9
+
+- Worker: Test, fix buffer overflow ([PR #1419](https://github.com/versatica/mediasoup/pull/1419)).
+- Bump up Meson from 1.3.0 to 1.5.0 ([PR #1424](https://github.com/versatica/mediasoup/pull/1424)).
+- Node: Export new `WorkerObserver`, `ProducerObserver`, etc. TypeScript types ([PR #1430](https://github.com/versatica/mediasoup/pull/1430)).
+- Fix frozen video in simulcast due to wrong dropping of padding only packets ([PR #1431](https://github.com/versatica/mediasoup/pull/1431), thanks to @quanli168).
+
 ### 3.14.8
 
 - Add support for 'playout-delay' RTP extension ([PR #1412](https://github.com/versatica/mediasoup/pull/1412) by @DavidNegro).
@@ -430,7 +439,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 3.10.2
 
-- Fix release contents by including meson_options.txt ([PR #863](https://github.com/versatica/mediasoup/pull/863)).
+- Fix release contents by including `meson_options.txt` ([PR #863](https://github.com/versatica/mediasoup/pull/863)).
 
 ### 3.10.1
 
