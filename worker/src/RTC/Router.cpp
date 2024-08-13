@@ -665,8 +665,11 @@ namespace RTC
 			std::shared_ptr<RTC::RtpPacket> sharedPacket;
 
 #ifdef MS_LIBURING_SUPPORTED
-			// Activate liburing usage.
-			DepLibUring::SetActive();
+			if (DepLibUring::IsEnabled())
+			{
+				// Activate liburing usage.
+				DepLibUring::SetActive();
+			}
 #endif
 
 			for (auto* consumer : consumers)
@@ -683,8 +686,11 @@ namespace RTC
 			}
 
 #ifdef MS_LIBURING_SUPPORTED
-			// Submit all prepared submission entries.
-			DepLibUring::Submit();
+			if (DepLibUring::IsEnabled())
+			{
+				// Submit all prepared submission entries.
+				DepLibUring::Submit();
+			}
 #endif
 		}
 
@@ -1015,10 +1021,13 @@ namespace RTC
 		if (!dataConsumers.empty())
 		{
 #ifdef MS_LIBURING_SUPPORTED
-			// Activate liburing usage.
-			// The effective sending could be synchronous, thus we would send those
-			// messages within a single system call.
-			DepLibUring::SetActive();
+			if (DepLibUring::IsEnabled())
+			{
+				// Activate liburing usage.
+				// The effective sending could be synchronous, thus we would send those
+				// messages within a single system call.
+				DepLibUring::SetActive();
+			}
 #endif
 
 			for (auto* dataConsumer : dataConsumers)
@@ -1027,8 +1036,11 @@ namespace RTC
 			}
 
 #ifdef MS_LIBURING_SUPPORTED
-			// Submit all prepared submission entries.
-			DepLibUring::Submit();
+			if (DepLibUring::IsEnabled())
+			{
+				// Submit all prepared submission entries.
+				DepLibUring::Submit();
+			}
 #endif
 		}
 	}

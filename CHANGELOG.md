@@ -2,6 +2,16 @@
 
 ### NEXT
 
+### 3.14.11
+
+- `Worker`: Fix `disableLiburing` option in `WorkerSettings` ([PR #1444](https://github.com/versatica/mediasoup/pull/1444)).
+
+### 3.14.10
+
+- CI: Support Node 22 ([PR #1434](https://github.com/versatica/mediasoup/pull/1434)).
+- Update ESLint to version 9 ([PR #1435](https://github.com/versatica/mediasoup/pull/1435)).
+- `Worker`: Add `disableLiburing` boolean option (`false` by default) to disable `io_uring` even if it's supported by the prebuilt `mediasoup-worker` and by current host ([PR #1442](https://github.com/versatica/mediasoup/pull/1442)).
+
 ### 3.14.9
 
 - Worker: Test, fix buffer overflow ([PR #1419](https://github.com/versatica/mediasoup/pull/1419)).
@@ -243,11 +253,11 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 3.12.2
 
-- CI: Use `ubuntu-20.04` to build mediasoup-worker prebuilt on Linux ([PR #1092](https://github.com/versatica/mediasoup/pull/1092)).
+- CI: Use `ubuntu-20.04` to build `mediasoup-worker` prebuilt on Linux ([PR #1092](https://github.com/versatica/mediasoup/pull/1092)).
 
 ### 3.12.1
 
-- mediasoup-worker prebuild: Fallback to local building if fetched binary doesn't run on current host ([PR #1090](https://github.com/versatica/mediasoup/pull/1090)).
+- `mediasoup-worker` prebuild: Fallback to local building if fetched binary doesn't run on current host ([PR #1090](https://github.com/versatica/mediasoup/pull/1090)).
 
 ### 3.12.0
 
@@ -661,7 +671,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 - `Transport`: Implement new `setMaxOutgoingBitrate()` method ([PR #555](https://github.com/versatica/mediasoup/pull/555) by @t-mullen).
 - `SctpAssociation`: Don't warn if SCTP send buffer is full.
 - Rust: Update modules structure and other minor improvements for Rust version ([PR #558](https://github.com/versatica/mediasoup/pull/558)).
-- `mediasoup-worker`: Avoid duplicated basenames so that libmediasoup-worker is compilable on macOS ([PR #557](https://github.com/versatica/mediasoup/pull/557)).
+- `mediasoup-worker`: Avoid duplicated basenames so that `libmediasoup-worker` is compilable on macOS ([PR #557](https://github.com/versatica/mediasoup/pull/557)).
 
 ### 3.7.5
 
@@ -774,8 +784,8 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 3.6.20
 
-- Remove `-fwrapv` when building mediasoup-worker in `Debug` mode (issue #460).
-- Add `MEDIASOUP_MAX_CORES` to limit `NUM_CORES` during mediasoup-worker build ([PR #462](https://github.com/versatica/mediasoup/pull/462)).
+- Remove `-fwrapv` when building `mediasoup-worker` in `Debug` mode (issue #460).
+- Add `MEDIASOUP_MAX_CORES` to limit `NUM_CORES` during `mediasoup-worker` build ([PR #462](https://github.com/versatica/mediasoup/pull/462)).
 
 ### 3.6.19
 
@@ -862,7 +872,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 ### 3.6.6
 
 - Update `usrsctp` library.
-- Update ESlint and TypeScript related dependencies.
+- Update ESLint and TypeScript related dependencies.
 
 ### 3.6.5
 
@@ -891,7 +901,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 - SCTP/DataChannel termination:
   - [PR #409](https://github.com/versatica/mediasoup/pull/409)
-  - Allow the Node application to directly send text/binary messages to mediasoup-worker C++ process so others can consume them using `DataConsumers`.
+  - Allow the Node application to directly send text/binary messages to `mediasoup-worker` C++ process so others can consume them using `DataConsumers`.
   - And vice-versa: allow the Node application to directly consume in Node messages send by `DataProducers`.
 - Add `WorkerLogTag` TypeScript enum and also add a new 'message' tag into it.
 
@@ -941,7 +951,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 3.5.7
 
-- Fix crash in mediasoup-worker due to conversion from `uint64_t` to `int64_t` (used within `libwebrtc` code. Fixes #357.
+- Fix crash in `mediasoup-worker` due to conversion from `uint64_t` to `int64_t` (used within `libwebrtc` code. Fixes #357.
 - Update `usrsctp` library.
 - Update Node deps.
 
@@ -1055,7 +1065,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 3.4.1
 
-- Improve mediasoup-worker build system by using `sh` instead of `bash` and default to 4 cores (thanks @smoke, [PR #349](https://github.com/versatica/mediasoup/pull/349)).
+- Improve `mediasoup-worker` build system by using `sh` instead of `bash` and default to 4 cores (thanks @smoke, [PR #349](https://github.com/versatica/mediasoup/pull/349)).
 
 ### 3.4.0
 
@@ -1130,7 +1140,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 ### 3.2.1
 
 - Add RTCP Extended Reports for RTT calculation on receiver RTP stream (thanks @yangjinechofor for initial pull request #314).
-- Make mediasoup-worker compile in Armbian Debian Buster (thanks @krishisola, fixes #321).
+- Make `mediasoup-worker` compile in Armbian Debian Buster (thanks @krishisola, fixes #321).
 
 ### 3.2.0
 
@@ -1252,7 +1262,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 2.6.13
 
-- Make mediasoup-worker compile in Armbian Debian Buster (thanks @krishisola, fixes #321).
+- Make `mediasoup-worker` compile in Armbian Debian Buster (thanks @krishisola, fixes #321).
 - Update deps.
 
 ### 2.6.12
@@ -1278,7 +1288,7 @@ Migrate `npm-scripts.js` to `npm-scripts.mjs` (ES Module) ([PR #1093](https://gi
 
 ### 2.6.7
 
-- Fix wrong destruction of Transports in Router.cpp that generates 100% CPU usage in mediasoup-worker processes.
+- Fix wrong destruction of Transports in Router.cpp that generates 100% CPU usage in `mediasoup-worker` processes.
 
 ### 2.6.6
 

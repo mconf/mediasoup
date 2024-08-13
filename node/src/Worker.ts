@@ -84,6 +84,11 @@ export type WorkerSettings<WorkerAppData extends AppData = AppData> = {
 	libwebrtcFieldTrials?: string;
 
 	/**
+	 * Disable liburing (io_uring) despite it's supported in current host.
+	 */
+	disableLiburing?: boolean;
+
+	/**
 	 * Custom application data.
 	 */
 	appData?: WorkerAppData;
@@ -101,8 +106,6 @@ export type WorkerUpdateableSettings<T extends AppData = AppData> = Pick<
  * - https://linux.die.net/man/2/getrusage
  */
 export type WorkerResourceUsage = {
-	/* eslint-disable camelcase */
-
 	/**
 	 * User CPU time used (in ms).
 	 */
@@ -182,8 +185,6 @@ export type WorkerResourceUsage = {
 	 * Involuntary context switches.
 	 */
 	ru_nivcsw: number;
-
-	/* eslint-enable camelcase */
 };
 
 export type WorkerDump = {
@@ -291,6 +292,7 @@ export class Worker<
 		dtlsCertificateFile,
 		dtlsPrivateKeyFile,
 		libwebrtcFieldTrials,
+		disableLiburing,
 		appData,
 	}: WorkerSettings<WorkerAppData>) {
 		super();
@@ -301,7 +303,7 @@ export class Worker<
 		let spawnArgs: string[] = [];
 
 		if (process.env.MEDIASOUP_USE_VALGRIND === 'true') {
-			spawnBin = process.env.MEDIASOUP_VALGRIND_BIN || 'valgrind';
+			spawnBin = process.env.MEDIASOUP_VALGRIND_BIN ?? 'valgrind';
 
 			if (process.env.MEDIASOUP_VALGRIND_OPTIONS) {
 				spawnArgs = spawnArgs.concat(
@@ -340,6 +342,10 @@ export class Worker<
 
 		if (typeof libwebrtcFieldTrials === 'string' && libwebrtcFieldTrials) {
 			spawnArgs.push(`--libwebrtcFieldTrials=${libwebrtcFieldTrials}`);
+		}
+
+		if (disableLiburing) {
+			spawnArgs.push(`--disableLiburing=true`);
 		}
 
 		logger.debug(
@@ -383,7 +389,7 @@ export class Worker<
 			pid: this.#pid,
 		});
 
-		this.#appData = appData || ({} as WorkerAppData);
+		this.#appData = appData ?? ({} as WorkerAppData);
 
 		let spawnDone = false;
 
@@ -636,7 +642,6 @@ export class Worker<
 
 		const ru = resourceUsage.unpack();
 
-		/* eslint-disable camelcase */
 		return {
 			ru_utime: Number(ru.ruUtime),
 			ru_stime: Number(ru.ruStime),
@@ -655,7 +660,6 @@ export class Worker<
 			ru_nvcsw: Number(ru.ruNvcsw),
 			ru_nivcsw: Number(ru.ruNivcsw),
 		};
-		/* eslint-enable camelcase */
 	}
 
 	/**
@@ -729,7 +733,7 @@ export class Worker<
 			createWebRtcServerRequestOffset
 		);
 
-		const webRtcServer = new WebRtcServer<WebRtcServerAppData>({
+		const webRtcServer: WebRtcServer<WebRtcServerAppData> = new WebRtcServer({
 			internal: { webRtcServerId },
 			channel: this.#channel,
 			appData,
@@ -780,7 +784,7 @@ export class Worker<
 		);
 
 		const data = { rtpCapabilities };
-		const router = new Router<RouterAppData>({
+		const router: Router<RouterAppData> = new Router({
 			internal: {
 				routerId,
 			},
@@ -803,7 +807,7 @@ export class Worker<
 			return;
 		}
 
-		logger.debug(`died() [error:${error}]`);
+		logger.debug(`died() [error:${error.toString()}]`);
 
 		this.#closed = true;
 		this.#died = true;
@@ -834,7 +838,7 @@ export function parseWorkerDumpResponse(
 	binary: FbsWorker.DumpResponse
 ): WorkerDump {
 	const dump: WorkerDump = {
-		pid: binary.pid()!,
+		pid: binary.pid(),
 		webRtcServerIds: utils.parseVector(binary, 'webRtcServerIds'),
 		routerIds: utils.parseVector(binary, 'routerIds'),
 		channelMessageHandlers: {

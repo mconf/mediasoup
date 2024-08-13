@@ -4,16 +4,17 @@
 #include "DepLibUring.hpp"
 #include "Logger.hpp"
 #include "MediaSoupErrors.hpp"
+#include "Settings.hpp"
 #include "Utils.hpp"
 #include <sys/eventfd.h>
 #include <sys/resource.h>
 #include <sys/utsname.h>
 
 /* Static variables. */
-
-/* liburing instance per thread. */
+thread_local bool DepLibUring::enabled{ false };
+// liburing instance per thread.
 thread_local DepLibUring::LibUring* DepLibUring::liburing{ nullptr };
-/* Completion queue entry array used to retrieve processes tasks. */
+// Completion queue entry array used to retrieve processes tasks.
 thread_local struct io_uring_cqe* cqes[DepLibUring::QueueDepth];
 
 /* Static methods for UV callbacks. */
@@ -114,7 +115,43 @@ inline static void onFdEvent(uv_poll_t* handle, int status, int events)
 
 /* Static class methods */
 
-bool DepLibUring::IsRuntimeSupported()
+void DepLibUring::ClassInit()
+{
+	const auto mayor = io_uring_major_version();
+	const auto minor = io_uring_minor_version();
+
+	MS_DEBUG_TAG(info, "liburing version: \"%i.%i\"", mayor, minor);
+
+	if (Settings::configuration.liburingDisabled)
+	{
+		MS_DEBUG_TAG(info, "liburing disabled by user settings");
+
+		return;
+	}
+
+	// This must be called first.
+	DepLibUring::CheckRuntimeSupport();
+
+	if (DepLibUring::IsEnabled())
+	{
+		DepLibUring::liburing = new LibUring();
+
+		MS_DEBUG_TAG(info, "liburing enabled");
+	}
+	else
+	{
+		MS_DEBUG_TAG(info, "liburing not enabled");
+	}
+}
+
+void DepLibUring::ClassDestroy()
+{
+	MS_TRACE();
+
+	delete DepLibUring::liburing;
+}
+
+void DepLibUring::CheckRuntimeSupport()
 {
 	// clang-format off
 	struct utsname buffer{};
@@ -134,43 +171,19 @@ bool DepLibUring::IsRuntimeSupported()
 
 	// liburing `sento` capabilities are supported for kernel versions greather
 	// than or equal to 6.
-	return kernelMayorLong >= 6;
+	DepLibUring::enabled = kernelMayorLong >= 6;
 }
 
-void DepLibUring::ClassInit()
+bool DepLibUring::IsEnabled()
 {
-	const auto mayor = io_uring_major_version();
-	const auto minor = io_uring_minor_version();
-
-	MS_DEBUG_TAG(info, "liburing version: \"%i.%i\"", mayor, minor);
-
-	if (DepLibUring::IsRuntimeSupported())
-	{
-		DepLibUring::liburing = new LibUring();
-
-		MS_DEBUG_TAG(info, "liburing supported, enabled");
-	}
-	else
-	{
-		MS_DEBUG_TAG(info, "liburing not supported, not enabled");
-	}
-}
-
-void DepLibUring::ClassDestroy()
-{
-	MS_TRACE();
-
-	delete DepLibUring::liburing;
+	return DepLibUring::enabled;
 }
 
 flatbuffers::Offset<FBS::LibUring::Dump> DepLibUring::FillBuffer(flatbuffers::FlatBufferBuilder& builder)
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return 0;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	return DepLibUring::liburing->FillBuffer(builder);
 }
@@ -179,10 +192,7 @@ void DepLibUring::StartPollingCQEs()
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	DepLibUring::liburing->StartPollingCQEs();
 }
@@ -191,10 +201,7 @@ void DepLibUring::StopPollingCQEs()
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	DepLibUring::liburing->StopPollingCQEs();
 }
@@ -203,7 +210,7 @@ uint8_t* DepLibUring::GetSendBuffer()
 {
 	MS_TRACE();
 
-	MS_ASSERT(DepLibUring::liburing, "DepLibUring::liburing is not set");
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	return DepLibUring::liburing->GetSendBuffer();
 }
@@ -213,7 +220,7 @@ bool DepLibUring::PrepareSend(
 {
 	MS_TRACE();
 
-	MS_ASSERT(DepLibUring::liburing, "DepLibUring::liburing is not set");
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	return DepLibUring::liburing->PrepareSend(sockfd, data, len, addr, cb);
 }
@@ -223,7 +230,7 @@ bool DepLibUring::PrepareWrite(
 {
 	MS_TRACE();
 
-	MS_ASSERT(DepLibUring::liburing, "DepLibUring::liburing is not set");
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	return DepLibUring::liburing->PrepareWrite(sockfd, data1, len1, data2, len2, cb);
 }
@@ -232,10 +239,7 @@ void DepLibUring::Submit()
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	DepLibUring::liburing->Submit();
 }
@@ -244,10 +248,7 @@ void DepLibUring::SetActive()
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	DepLibUring::liburing->SetActive();
 }
@@ -256,10 +257,7 @@ bool DepLibUring::IsActive()
 {
 	MS_TRACE();
 
-	if (!DepLibUring::liburing)
-	{
-		return false;
-	}
+	MS_ASSERT(DepLibUring::enabled, "DepLibUring::liburing not enabled");
 
 	return DepLibUring::liburing->IsActive();
 }
@@ -580,7 +578,7 @@ void DepLibUring::LibUring::Submit()
 	MS_TRACE();
 
 	// Unset active flag.
-	this->active = false;
+	SetInactive();
 
 	auto err = io_uring_submit(std::addressof(this->ring));
 
