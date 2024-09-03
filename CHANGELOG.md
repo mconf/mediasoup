@@ -2,6 +2,16 @@
 
 ### NEXT
 
+### 3.14.13
+
+- Node: Fix regression in exported `mediasoup.types` (classes are now exported as classes instead of types).
+
+### 3.14.12
+
+- `Worker`: Fix `io_uring` support detection ([PR #1445](https://github.com/versatica/mediasoup/pull/1445)).
+- Mitigate libsrtp wraparound with loss decryption failure ([PR #1438](https://github.com/versatica/mediasoup/pull/1438)).
+- Node: New `setLogEventListeners()` utility to get log events ([PR #1448](https://github.com/versatica/mediasoup/pull/1448)).
+
 ### 3.14.11
 
 - `Worker`: Fix `disableLiburing` option in `WorkerSettings` ([PR #1444](https://github.com/versatica/mediasoup/pull/1444)).
