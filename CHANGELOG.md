@@ -2,6 +2,11 @@
 
 ### NEXT
 
+### 3.14.14
+
+- Sign self generated DTLS certificate with SHA256 ([PR #1450](https://github.com/versatica/mediasoup/pull/1450)).
+- Node: Fix `mediasoup.types` exported types are empty ([PR #1453](https://github.com/versatica/mediasoup/pull/1453)).
+
 ### 3.14.13
 
 - Node: Fix regression in exported `mediasoup.types` (classes are now exported as classes instead of types).
